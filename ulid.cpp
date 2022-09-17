@@ -3,6 +3,7 @@
 #include <chrono>
 
 using u8 = uint8_t;
+using u32 = uint32_t;
 using u64 = uint64_t;
 
 namespace ulid {
@@ -28,25 +29,27 @@ static void ulid_create(u8* ulid_buffer)
 {
     const auto time_epoc = std::chrono::system_clock::now().time_since_epoch();
     const auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(time_epoc).count();
-    ulid_buffer[0] = (u8)(timestamp >> 40);
-    ulid_buffer[1] = (u8)(timestamp >> 32);
-    ulid_buffer[2] = (u8)(timestamp >> 24);
-    ulid_buffer[3] = (u8)(timestamp >> 16);
-    ulid_buffer[4] = (u8)(timestamp >> 8);
-    ulid_buffer[5] = (u8)(timestamp >> 0);
 
-    u64 r = rng();
-    ulid_buffer[6] = (u8)(r >> 56);
-    ulid_buffer[7] = (u8)(r >> 48);
-    ulid_buffer[8] = (u8)(r >> 40);
-    ulid_buffer[9] = (u8)(r >> 32);
-    ulid_buffer[10] = (u8)(r >> 24);
-    ulid_buffer[11] = (u8)(r >> 16);
-    ulid_buffer[12] = (u8)(r >> 8);
-    ulid_buffer[13] = (u8)(r >> 0);
+    ulid_buffer[0] = timestamp >> 40;
+    ulid_buffer[1] = timestamp >> 32;
+    ulid_buffer[2] = timestamp >> 24;
+    ulid_buffer[3] = timestamp >> 16;
+    ulid_buffer[4] = timestamp >> 8;
+    ulid_buffer[5] = timestamp >> 0;
+
+    u32 r = rng();
+    ulid_buffer[6] = r >> 24;
+    ulid_buffer[7] = r >> 16;
+    ulid_buffer[8] = r >> 8;
+    ulid_buffer[9] = r;
     r = rng();
-    ulid_buffer[14] = (u8)(r >> 8);
-    ulid_buffer[15] = (u8)(r >> 0);
+    ulid_buffer[10] = r >> 24;
+    ulid_buffer[11] = r >> 16;
+    ulid_buffer[12] = r >> 8;
+    ulid_buffer[13] = r >> 0;
+    r = rng();
+    ulid_buffer[14] = r >> 8;
+    ulid_buffer[15] = r;
 }
 
 static void ulid_encode(const u8* ulid_data, u8* output)
