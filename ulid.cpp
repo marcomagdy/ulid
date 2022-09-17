@@ -8,7 +8,7 @@ using u64 = uint64_t;
 
 namespace ulid {
 
-static u64 time_seed()
+static u64 seed()
 {
     const auto now = std::chrono::steady_clock::now();
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
@@ -16,14 +16,17 @@ static u64 time_seed()
 }
 
 // xorshift64*
+static u64 g_state = seed();
 static u64 rng()
 {
-    static u64 x = time_seed();
+    auto x = g_state;
     x ^= x >> 12;
     x ^= x << 25;
     x ^= x >> 27;
+    g_state = x;
     return x * 0x2545F4914F6CDD1DULL;
 }
+
 
 static void ulid_create(u8* ulid_buffer)
 {
