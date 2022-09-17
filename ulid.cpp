@@ -72,12 +72,26 @@ static void ulid_encode(const u8* ulid_data, u8* output)
     }
 }
 
-std::string create()
+std::string ulid_t::str() const
+{
+    u8 output[26];
+    ulid_encode(bits, output);
+    return { reinterpret_cast<const char*>(output), 26 };
+}
+
+std::string ulid_string()
 {
     u8 binary[16];
     ulid_create(binary);
     u8 output[26];
     ulid_encode(binary, output);
     return { reinterpret_cast<const char*>(output), 26 };
+}
+
+ulid_t ulid()
+{
+    ulid_t out;
+    ulid_create(out.bits);
+    return out;
 }
 }
