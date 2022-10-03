@@ -26,7 +26,8 @@ For more information, please refer to <http://unlicense.org/>
 */
 
 #pragma once
-#include <string>
+#include <optional>
+#include <string_view>
 
 namespace ulid {
 struct ulid_t {
@@ -41,6 +42,7 @@ struct ulid_t {
     std::string str() const;
 };
 
-std::string ulid_string();
 ulid_t ulid();
+std::optional<ulid_t> ulid(std::string_view);
+
 }

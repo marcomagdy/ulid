@@ -28,6 +28,7 @@ For more information, please refer to <http://unlicense.org/>
 #include "ulid.h"
 
 #include <chrono>
+#include <string>
 
 using u8 = uint8_t;
 using u32 = uint32_t;
@@ -111,19 +112,18 @@ std::string ulid_t::str() const
     return { reinterpret_cast<const char*>(output), 26 };
 }
 
-std::string ulid_string()
-{
-    u8 binary[16];
-    ulid_create(binary);
-    u8 output[26];
-    ulid_encode(binary, output);
-    return { reinterpret_cast<const char*>(output), 26 };
-}
-
 ulid_t ulid()
 {
     ulid_t out;
     ulid_create(out.bits);
     return out;
+}
+
+std::optional<ulid_t> ulid(std::string_view sv)
+{
+    if (sv.length() != 26) {
+        return std::nullopt;
+    }
+    return ulid();
 }
 }
