@@ -112,18 +112,26 @@ std::string ulid_t::str() const
     return { reinterpret_cast<const char*>(output), 26 };
 }
 
-ulid_t ulid()
+ulid_t generate()
 {
     ulid_t out;
     ulid_create(out.bits);
     return out;
 }
 
-std::optional<ulid_t> ulid(std::string_view sv)
+void generate(char (&output)[27])
 {
-    if (sv.length() != 26) {
+    ulid_t out;
+    ulid_create(out.bits);
+    ulid_encode(out.bits, reinterpret_cast<u8*>(output));
+    output[26] = '\0';
+}
+
+std::optional<ulid_t> parse(std::string_view sv)
+{
+    if (sv.length() < 26) {
         return std::nullopt;
     }
-    return ulid();
+    return generate();
 }
 }
