@@ -39,6 +39,8 @@ namespace ulid {
                 u8 random[10];
             };
         };
+
+        [[nodiscard]]
         std::string str() const;
     };
 
