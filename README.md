@@ -1,25 +1,32 @@
 # libulid
 
-`ulid` implementation in C++ with the following feature set that makes it suitable for usage in embedded environments:
+[`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
 1. No dynamic allocations
+1. No C++ Exceptions
 1. Thread-safe
-1. No usage of C++ Exceptions
-
 
 ## Installation
 
 Either add the files `ulid.cpp` and `ulid.h` to your project, or clone the project, build it and install it.
 
-## Usage
+## API
 
-
-No any dynamic allocation:
+No dynamic allocation:
 ```cpp
-    char ulid_str[27];
-    ulid::generate(ulid_str);
-    printf("%s\n", ulid_str); // ulid_str is null-terminated
+  char ulid_str[27]; // 26 characters + null terminator
+  ulid::generate(ulid_str);
+  printf("%s\n", ulid_str); // ulid_str is null-terminated
 ```
 
-For convenience in less-restricted environments:
-`std::string unique = ulid::generate().str();`
+Simple API:
+```cpp
+  std::string unique = ulid::generate().str();
+```
+
+Decode a ULID string back to bytes:
+```cpp
+  const char some_ulid[] = "01GF428XRREWQWJHXRRGNN99NV";
+  ulid::ulid_t bits = ulid::from_str(some_ulid);
+```
+
 
