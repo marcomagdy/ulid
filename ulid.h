@@ -30,21 +30,34 @@
 #include <string_view>
 
 namespace ulid {
-    struct ulid_t {
-        using u8 = unsigned char;
-        union {
-            u8 bits[16];
-            struct {
-                u8 time[6];
-                u8 random[10];
-            };
+struct ulid_t {
+    using u8 = unsigned char;
+    union {
+        u8 bits[16];
+        struct {
+            u8 time[6];
+            u8 random[10];
         };
-
-        [[nodiscard]]
-        std::string str() const;
     };
 
-    ulid_t generate();
-    void generate(char (&output)[27]);
-    std::optional<ulid_t> parse(std::string_view);
-}
+    /**
+     * Serialize the ULID object into a string.
+     */
+    std::string str() const;
+};
+
+/**
+ * Generate a new ULID.
+ */
+ulid_t generate();
+
+/**
+ * Generate a new ULID string in the provided buffer and null terminate it.
+ */
+void generate(char (&output)[27]);
+
+/**
+ * Decode a ULID string into its binary format.
+ */
+std::optional<ulid_t> from_str(std::string_view ulid_str);
+} // namespace ulid
