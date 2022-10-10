@@ -42,14 +42,12 @@ static u64 seed()
 }
 
 // xorshift64*
-static u64 g_state = seed();
 static u64 rng()
 {
-    auto x = g_state;
+    static u64 x = seed();
     x ^= x >> 12;
     x ^= x << 25;
     x ^= x >> 27;
-    g_state = x;
     return x * 0x2545F4914F6CDD1DULL;
 }
 
@@ -144,7 +142,7 @@ static void decode_base32(const char* data, u8* out)
 
 static bool validate(std::string_view data)
 {
-    if (data.size() < 26) {
+    if (data.size() != 26) {
         return false;
     }
 
