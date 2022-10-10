@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
-project(ulid CXX)
+project(ulid VERSION 0.1.0 LANGUAGES CXX)
 
 option(ENABLE_SANITIZERS "Enables ASAN and UBSAN" ON)
-option(ENABLE_TESTS "Enables unit tests and UBSAN" OFF)
+option(ENABLE_TESTS "Enables unit tests and UBSAN" ON)
 
 add_library(${PROJECT_NAME} ulid.cpp)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
@@ -11,9 +11,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -fno-rtti
     -Wall
     -Wextra
-    -Werror
-    )
-
+    -Werror)
 
 if (ENABLE_TESTS)
     enable_testing()
