@@ -81,7 +81,7 @@ static void ulid_create(u8* ulid_buffer)
 
 static void ulid_encode(const u8* ulid_data, u8* output)
 {
-    static constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
     output[0] = lookup[ulid_data[0] >> 5 & 7]; // bits[7,6,5]
     output[1] = lookup[ulid_data[0] & 31];     // bits[4,3,2,1,0]
@@ -103,11 +103,13 @@ static void ulid_encode(const u8* ulid_data, u8* output)
     }
 }
 
-static u8 decode_char(char c)
+static constexpr u8 decode_char(char c)
 {
-    // Table for decoding uppercase and lowercase base32 characters
+    // Table for decoding uppercase and lowercase base32 characters excluding I, L, O, U (i.e. Crockford's base32).
+    // Other characters will decode to 0xff.
+
     // clang-format off
-    static const uint8_t decoded[75] = {
+    constexpr u8 lookup[75] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
         0x08, 0x09, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0xFF, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
@@ -120,23 +122,27 @@ static u8 decode_char(char c)
         0x1D, 0x1E, 0x1F,
     };
     // clang-format on
-    return decoded[c - '0'];
+    return lookup[c - '0'];
 }
 
-static void decode_base32(const char* data, u8* out)
+static void ulid_decode(const char* ulid_data, u8* output)
 {
+    output[0] = decode_char(ulid_data[0]) << 5 | decode_char(ulid_data[1]);
+    ulid_data += 2;
+    output += 1;
+
     for (int i = 0; i < 3; ++i) {
         u8 decoded[8];
         for (int j = 0; j < 8; ++j) {
-            decoded[j] = decode_char(data[j]);
+            decoded[j] = decode_char(ulid_data[j]);
         }
-        out[0] = (decoded[0] << 3) | (decoded[1] >> 2);
-        out[1] = (decoded[1] << 6) | (decoded[2] << 1) | (decoded[3] >> 4);
-        out[2] = (decoded[3] << 4) | (decoded[4] >> 1);
-        out[3] = (decoded[4] << 7) | (decoded[5] << 2) | (decoded[6] >> 3);
-        out[4] = (decoded[6] << 5) | decoded[7];
-        out += 5;
-        data += 8;
+        output[0] = (decoded[0] << 3) | (decoded[1] >> 2);
+        output[1] = (decoded[1] << 6) | (decoded[2] << 1) | (decoded[3] >> 4);
+        output[2] = (decoded[3] << 4) | (decoded[4] >> 1);
+        output[3] = (decoded[4] << 7) | (decoded[5] << 2) | (decoded[6] >> 3);
+        output[4] = (decoded[6] << 5) | decoded[7];
+        output += 5;
+        ulid_data += 8;
     }
 }
 
@@ -187,10 +193,8 @@ std::optional<ulid_t> from_str(std::string_view ulid_string)
 
     ulid_t out;
     u8* out_ptr = out.bits;
-    *out_ptr++ = (decode_char(ulid_string[0]) << 5) | decode_char(ulid_string[1]);
-
-    const auto* data = ulid_string.data() + 2;
-    decode_base32(data, out_ptr);
+    auto* data = ulid_string.data();
+    ulid_decode(data, out_ptr);
     return out;
 }
 } // namespace ulid

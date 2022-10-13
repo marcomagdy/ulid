@@ -60,4 +60,5 @@ void generate(char (&output)[27]);
  * Decode a ULID string into its binary format.
  */
 std::optional<ulid_t> from_str(std::string_view ulid_str);
+
 } // namespace ulid
