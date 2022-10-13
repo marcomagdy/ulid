@@ -1,9 +1,9 @@
 ---
 Checks:
-'clang-diagnostic-*,clang-analyzer-*,performance-*,bugprone-*,misc-*,-modernize-use-trailing-return-type'
-WarningsAsErrors: '*'
-HeaderFilterRegex: 'include/aws/.*\.h$'
+'clang-diagnostic-*,clang-analyzer-*,performance-*,bugprone-*,misc-*,readability-*,-readability-magic-numbers,-modernize-use-trailing-return-type'
+HeaderFilterRegex: 'ulid\.h'
 FormatStyle: 'none'
+WarningsAsErrors: '*, -readability-*'
 CheckOptions:
   - key:             modernize-pass-by-value.ValuesOnly
     value:           '1'

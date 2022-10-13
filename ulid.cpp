@@ -37,18 +37,18 @@ using u64 = uint64_t;
 static u64 seed()
 {
     const auto now = std::chrono::steady_clock::now();
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
-    return ms.count();
+    const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    return millis.count();
 }
 
 // xorshift64*
 static u64 rng()
 {
-    static u64 x = seed();
-    x ^= x >> 12;
-    x ^= x << 25;
-    x ^= x >> 27;
-    return x * 0x2545F4914F6CDD1DULL;
+    static u64 state = seed();
+    state ^= state >> 12;
+    state ^= state << 25;
+    state ^= state >> 27;
+    return state * 0x2545F4914F6CDD1DULL;
 }
 
 static void ulid_create(u8* ulid_buffer)
@@ -103,7 +103,7 @@ static void ulid_encode(const u8* ulid_data, u8* output)
     }
 }
 
-static constexpr u8 decode_char(char c)
+static constexpr u8 decode_char(char character)
 {
     // Table for decoding uppercase and lowercase base32 characters excluding I, L, O, U (i.e. Crockford's base32).
     // Other characters will decode to 0xff.
@@ -122,7 +122,7 @@ static constexpr u8 decode_char(char c)
         0x1D, 0x1E, 0x1F,
     };
     // clang-format on
-    return lookup[c - '0'];
+    return lookup[character - '0'];
 }
 
 static void ulid_decode(const char* ulid_data, u8* output)
@@ -152,13 +152,11 @@ static bool validate(std::string_view data)
         return false;
     }
 
-    for (char c : data) {
-        if (decode_char(c) == 0xFF) {
-            return false;
-        }
-    }
+    auto is_decodable = [](char letter) {
+        return decode_char(letter) != 0xff;
+    };
 
-    return true;
+    return std::all_of(data.begin(), data.end(), is_decodable);
 }
 
 namespace ulid {
@@ -193,7 +191,7 @@ std::optional<ulid_t> from_str(std::string_view ulid_string)
 
     ulid_t out;
     u8* out_ptr = out.bits;
-    auto* data = ulid_string.data();
+    const auto* data = ulid_string.data();
     ulid_decode(data, out_ptr);
     return out;
 }

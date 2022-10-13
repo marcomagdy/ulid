@@ -54,7 +54,7 @@ ulid_t generate();
 /**
  * Generate a new ULID string in the provided buffer and null terminate it.
  */
-void generate(char (&output)[27]);
+void generate(char (&output)[27 /* 26 chars + null-terminator */]);
 
 /**
  * Decode a ULID string into its binary format.
