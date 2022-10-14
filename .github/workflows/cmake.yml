@@ -30,6 +30,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install Clang Tidy
+      run: sudo apt install clang-tidy
+
     - name: Install Catch2
       run: |
         git clone https://github.com/catchorg/Catch2.git
@@ -40,7 +43,7 @@ jobs:
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_CLANG_TIDY=clang-tidy
 
     - name: Build
       # Build your program with the given configuration
