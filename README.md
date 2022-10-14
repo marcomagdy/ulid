@@ -1,9 +1,10 @@
 # libulid
 
+![Linux build badge](https://github.com/marcomagdy/ulid/actions/workflows/cmake.yml/badge.svg)
+
 [`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
 1. No dynamic allocations
 1. No C++ Exceptions
-1. Thread-safe
 
 ## Installation
 
