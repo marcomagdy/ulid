@@ -1,6 +1,7 @@
 # libulid
 
 ![Linux build badge](https://github.com/marcomagdy/ulid/actions/workflows/cmake.yml/badge.svg)
+![CodeQL badge](https://github.com/marcomagdy/ulid/actions/workflows/codeql.yml/badge.svg)
 
 [`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
 1. No dynamic allocations
