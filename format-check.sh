@@ -10,7 +10,7 @@ if ! type $CLANG_FORMAT > /dev/null 2>&1; then
 fi
 
 FAIL=0
-SOURCE_FILES=$(find . -type f -name "*.h" -o -name "*.cpp")
+SOURCE_FILES=$(find tests source -type f -name "*.h" -o -name "*.cpp")
 for i in $SOURCE_FILES
 do
     if [ $($CLANG_FORMAT -output-replacements-xml $i | grep -c "<replacement ") -ne 0 ]
