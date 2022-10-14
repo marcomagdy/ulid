@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(ulid VERSION 0.1.0 LANGUAGES CXX)
 
 option(ENABLE_SANITIZERS "Enables ASAN and UBSAN" ON)
-option(ENABLE_TESTS "Enables unit tests and UBSAN" ON)
 
 add_library(${PROJECT_NAME} ulid.cpp)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
@@ -13,17 +12,14 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wextra
     -Werror)
 
-if (ENABLE_TESTS)
-    enable_testing()
+include(CTest)
+if (BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
 if (ENABLE_SANITIZERS)
     target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
     target_link_options(${PROJECT_NAME} PUBLIC "-fsanitize=address,undefined")
-
-    target_compile_options(${PROJECT_NAME}-test PRIVATE -fsanitize=address,undefined)
-    target_link_options(${PROJECT_NAME}-test PUBLIC "-fsanitize=address,undefined")
 endif()
 
 include(GNUInstallDirs)
