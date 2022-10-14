@@ -64,19 +64,19 @@ static void ulid_create(u8* ulid_buffer)
     ulid_buffer[4] = timestamp >> 8;
     ulid_buffer[5] = timestamp >> 0;
 
-    u32 r = rng();
-    ulid_buffer[6] = r >> 24;
-    ulid_buffer[7] = r >> 16;
-    ulid_buffer[8] = r >> 8;
-    ulid_buffer[9] = r;
-    r = rng();
-    ulid_buffer[10] = r >> 24;
-    ulid_buffer[11] = r >> 16;
-    ulid_buffer[12] = r >> 8;
-    ulid_buffer[13] = r >> 0;
-    r = rng();
-    ulid_buffer[14] = r >> 8;
-    ulid_buffer[15] = r;
+    u32 num = rng();
+    ulid_buffer[6] = num >> 24;
+    ulid_buffer[7] = num >> 16;
+    ulid_buffer[8] = num >> 8;
+    ulid_buffer[9] = num;
+    num = rng();
+    ulid_buffer[10] = num >> 24;
+    ulid_buffer[11] = num >> 16;
+    ulid_buffer[12] = num >> 8;
+    ulid_buffer[13] = num >> 0;
+    num = rng();
+    ulid_buffer[14] = num >> 8;
+    ulid_buffer[15] = num;
 }
 
 static void ulid_encode(const u8* ulid_data, u8* output)
@@ -152,9 +152,7 @@ static bool validate(std::string_view data)
         return false;
     }
 
-    auto is_decodable = [](char letter) {
-        return decode_char(letter) != 0xff;
-    };
+    auto is_decodable = [](char letter) { return decode_char(letter) != 0xff; };
 
     return std::all_of(data.begin(), data.end(), is_decodable);
 }

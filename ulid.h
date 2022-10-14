@@ -23,7 +23,7 @@
    OTHER DEALINGS IN THE SOFTWARE.
 
    For more information, please refer to <http://unlicense.org/>
-   */
+*/
 
 #pragma once
 #include <optional>
@@ -32,16 +32,10 @@
 namespace ulid {
 struct ulid_t {
     using u8 = unsigned char;
-    union {
-        u8 bits[16];
-        struct {
-            u8 time[6];
-            u8 random[10];
-        };
-    };
+    u8 bits[16];
 
     /**
-     * Serialize the ULID object into a string.
+     * Serialize the ULID bits into a string.
      */
     std::string str() const;
 };
@@ -52,9 +46,9 @@ struct ulid_t {
 ulid_t generate();
 
 /**
- * Generate a new ULID string in the provided buffer and null terminate it.
+ * Generate a new ULID string (26 characters) in the provided buffer and null terminate it.
  */
-void generate(char (&output)[27 /* 26 chars + null-terminator */]);
+void generate(char (&output)[27]);
 
 /**
  * Decode a ULID string into its binary format.
