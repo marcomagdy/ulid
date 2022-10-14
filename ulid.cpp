@@ -27,6 +27,7 @@
 
 #include "ulid.h"
 
+#include <algorithm>
 #include <chrono>
 #include <string>
 
