@@ -57,3 +57,26 @@ TEST_CASE("ULID generate into a pre-allocated buffer is null-terminated", "[ulid
     REQUIRE(ulid::from_str(output) != std::nullopt);
 }
 
+TEST_CASE("ULID decodes to correct byte values", "[ulid]")
+{
+    std::string ulid_str = "01GFBZE3YBBJX1DVTM13EXZ2X6";
+    const auto ulid = ulid::from_str(ulid_str).value();
+    // Equivalent UUID of this ULID is 0183D7F7-0FCB-5CBA-16EF-5408DDDF8BA6
+    // check each byte individually
+    REQUIRE(ulid.bits[0] == 0x01);
+    REQUIRE(ulid.bits[1] == 0x83);
+    REQUIRE(ulid.bits[2] == 0xD7);
+    REQUIRE(ulid.bits[3] == 0xF7);
+    REQUIRE(ulid.bits[4] == 0x0F);
+    REQUIRE(ulid.bits[5] == 0xCB);
+    REQUIRE(ulid.bits[6] == 0x5C);
+    REQUIRE(ulid.bits[7] == 0xBA);
+    REQUIRE(ulid.bits[8] == 0x16);
+    REQUIRE(ulid.bits[9] == 0xEF);
+    REQUIRE(ulid.bits[10] == 0x54);
+    REQUIRE(ulid.bits[11] == 0x08);
+    REQUIRE(ulid.bits[12] == 0xDD);
+    REQUIRE(ulid.bits[13] == 0xDF);
+    REQUIRE(ulid.bits[14] == 0x8B);
+    REQUIRE(ulid.bits[15] == 0xA6);
+}
