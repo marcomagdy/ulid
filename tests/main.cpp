@@ -1,6 +1,8 @@
 #include "ulid.h"
 
+#include <algorithm>
 #include <string>
+#include <thread>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -79,4 +81,30 @@ TEST_CASE("ULID decodes to correct byte values", "[ulid]")
     REQUIRE(ulid.bits[13] == 0xDF);
     REQUIRE(ulid.bits[14] == 0x8B);
     REQUIRE(ulid.bits[15] == 0xA6);
+}
+TEST_CASE("ULID random number generation is thread-safe", "[ulid]")
+{
+    std::vector<std::string> thread_one_ulids;
+    std::thread thread_one([&]() {
+        for (int i = 0; i < 1000; i++) {
+            thread_one_ulids.emplace_back(ulid::generate().str());
+        }
+    });
+
+    std::vector<std::string> thread_two_ulids;
+    std::thread thread_two([&]() {
+        for (int i = 0; i < 1000; i++) {
+            thread_two_ulids.emplace_back(ulid::generate().str());
+        }
+    });
+
+    thread_one.join();
+    thread_two.join();
+
+    std::vector<std::string> all_ulids;
+    all_ulids.insert(all_ulids.end(), thread_one_ulids.begin(), thread_one_ulids.end());
+    all_ulids.insert(all_ulids.end(), thread_two_ulids.begin(), thread_two_ulids.end());
+
+    std::sort(all_ulids.begin(), all_ulids.end());
+    REQUIRE(std::adjacent_find(all_ulids.begin(), all_ulids.end()) == all_ulids.end());
 }
