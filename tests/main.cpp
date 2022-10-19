@@ -1,6 +1,7 @@
 #include "ulid.h"
 
 #include <algorithm>
+#include <random>
 #include <string>
 #include <thread>
 
@@ -82,6 +83,24 @@ TEST_CASE("ULID decodes to correct byte values", "[ulid]")
     REQUIRE(ulid.bits[14] == 0x8B);
     REQUIRE(ulid.bits[15] == 0xA6);
 }
+
+TEST_CASE("ULID generate using entropy from another source", "[ulid]")
+{
+    // Generate 10 random bytes from std::random_device
+    std::random_device random_device;
+    ulid::u8 entropy[10];
+    std::generate_n(entropy, 10, std::ref(random_device));
+
+    const auto ulid_string = ulid::generate(entropy).str();
+    // parse the generated ULID back into a ulid::ulid_t
+    std::optional<ulid::ulid_t> ulid = ulid::from_str(ulid_string);
+    REQUIRE(ulid != std::nullopt);
+    auto* bits = ulid->bits + 6; // skip the first 6 bytes (timestamp)
+
+    // check that the last 10 bytes of the ULID match the entropy we provided
+    REQUIRE(std::equal(bits, bits + 10, entropy));
+}
+
 TEST_CASE("ULID random number generation is thread-safe", "[ulid]")
 {
     std::vector<std::string> thread_one_ulids;
