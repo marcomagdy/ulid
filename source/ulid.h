@@ -30,8 +30,8 @@
 #include <string_view>
 
 namespace ulid {
+using u8 = unsigned char;
 struct ulid_t {
-    using u8 = unsigned char;
     u8 bits[16];
 
     /**
@@ -44,6 +44,11 @@ struct ulid_t {
  * Generate a new ULID.
  */
 ulid_t generate();
+
+/**
+ * Generate a new ULID using the given entropy source.
+ */
+ulid_t generate(const u8 (&entropy)[10]);
 
 /**
  * Generate a new ULID string (26 characters) in the provided buffer and null terminate it.

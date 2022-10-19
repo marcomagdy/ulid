@@ -87,6 +87,31 @@ static void ulid_create(u8* ulid_buffer)
     ulid_buffer[15] = num;
 }
 
+static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
+{
+    using namespace std::chrono;
+    const auto time_epoc = system_clock::now().time_since_epoch();
+    const auto timestamp = duration_cast<std::chrono::milliseconds>(time_epoc).count();
+
+    ulid_buffer[0] = timestamp >> 40;
+    ulid_buffer[1] = timestamp >> 32;
+    ulid_buffer[2] = timestamp >> 24;
+    ulid_buffer[3] = timestamp >> 16;
+    ulid_buffer[4] = timestamp >> 8;
+    ulid_buffer[5] = timestamp >> 0;
+
+    ulid_buffer[6] = entropy[0];
+    ulid_buffer[7] = entropy[1];
+    ulid_buffer[8] = entropy[2];
+    ulid_buffer[9] = entropy[3];
+    ulid_buffer[10] = entropy[4];
+    ulid_buffer[11] = entropy[5];
+    ulid_buffer[12] = entropy[6];
+    ulid_buffer[13] = entropy[7];
+    ulid_buffer[14] = entropy[8];
+    ulid_buffer[15] = entropy[9];
+}
+
 static void ulid_encode(const u8* ulid_data, u8* output)
 {
     constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -178,6 +203,13 @@ ulid_t generate()
 {
     ulid_t out;
     ulid_create(out.bits);
+    return out;
+}
+
+ulid_t generate(const u8 (&entropy)[10])
+{
+    ulid_t out;
+    ulid_create(out.bits, entropy);
     return out;
 }
 
