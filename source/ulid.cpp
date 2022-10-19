@@ -47,17 +47,15 @@ static u64 seed()
 static std::atomic<u64> state = seed();
 static u64 rng()
 {
-    u64 number = state.load(std::memory_order_relaxed);
-    u64 expected = number;
-    number ^= number >> 12;
-    number ^= number << 25;
-    number ^= number >> 27;
-    while (!state.compare_exchange_weak(expected, number, std::memory_order_relaxed)) {
+    u64 expected = state.load(std::memory_order_relaxed);
+    u64 number;
+    do {
         number = expected;
         number ^= number >> 12;
         number ^= number << 25;
         number ^= number >> 27;
-    }
+    } while (!state.compare_exchange_weak(expected, number, std::memory_order_relaxed));
+
     return number * 0x2545F4914F6CDD1DULL;
 }
 
