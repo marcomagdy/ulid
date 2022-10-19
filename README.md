@@ -3,14 +3,25 @@
 ![Linux build badge](https://github.com/marcomagdy/ulid/actions/workflows/cmake.yml/badge.svg)
 ![CodeQL badge](https://github.com/marcomagdy/ulid/actions/workflows/codeql.yml/badge.svg)
 
-[`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
+Lightweight [`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
+
 1. No dynamic allocations
 1. No C++ Exceptions
 1. Thread-safe
 
 ## Installation
 
-Either add the files `ulid.cpp` and `ulid.h` to your project, or clone the project, build it and install it.
+- Copy  `ulid.cpp` and `ulid.h` files to your project. That's it.
+
+- You can also build it from source and install it via CMake.
+
+```shell
+$ cmake -B build -DCMAKE_BUILD_TYPE=Release
+$ cmake --build build
+$ cmake --install build
+```
+
+
 
 ## API
 
@@ -31,5 +42,3 @@ Decode a ULID string back to bytes:
   const char some_ulid[] = "01GF428XRREWQWJHXRRGNN99NV";
   ulid::ulid_t bits = ulid::from_str(some_ulid);
 ```
-
-
