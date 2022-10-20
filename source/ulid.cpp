@@ -72,19 +72,18 @@ static void ulid_create(u8* ulid_buffer)
     ulid_buffer[4] = timestamp >> 8;
     ulid_buffer[5] = timestamp >> 0;
 
-    u32 num = rng();
-    ulid_buffer[6] = num >> 24;
-    ulid_buffer[7] = num >> 16;
-    ulid_buffer[8] = num >> 8;
-    ulid_buffer[9] = num;
-    num = rng();
+    u64 num = rng();
+    ulid_buffer[6] = num >> 56;
+    ulid_buffer[7] = num >> 48;
+    ulid_buffer[8] = num >> 40;
+    ulid_buffer[9] = num >> 32;
     ulid_buffer[10] = num >> 24;
     ulid_buffer[11] = num >> 16;
     ulid_buffer[12] = num >> 8;
     ulid_buffer[13] = num >> 0;
     num = rng();
-    ulid_buffer[14] = num >> 8;
-    ulid_buffer[15] = num;
+    ulid_buffer[14] = num >> 56;
+    ulid_buffer[15] = num >> 48;
 }
 
 static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])

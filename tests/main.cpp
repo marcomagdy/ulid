@@ -6,6 +6,7 @@
 #include <thread>
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 TEST_CASE("ulid::generate() generates a valid ULID", "[ulid]")
 {
@@ -126,4 +127,12 @@ TEST_CASE("ULID random number generation is thread-safe", "[ulid]")
 
     std::sort(all_ulids.begin(), all_ulids.end());
     REQUIRE(std::adjacent_find(all_ulids.begin(), all_ulids.end()) == all_ulids.end());
+}
+
+TEST_CASE("Benchmark ULID generation", "[benchmark]")
+{
+    char output[27];
+    BENCHMARK("ULID generation") {
+        ulid::generate(output);
+    };
 }
