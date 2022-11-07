@@ -31,7 +31,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Install Clang Tidy
-      run: sudo apt install clang-tidy
+      run: sudo apt-get update && sudo apt install clang-tidy
 
     - name: Install Catch2
       run: |
