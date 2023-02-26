@@ -1,12 +1,12 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
+
 #include "ulid.h"
 
 #include <algorithm>
 #include <random>
 #include <string>
 #include <thread>
-
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include <doctest/doctest.h>
 
 TEST_CASE("ulid::generate() generates a valid ULID")
 {
