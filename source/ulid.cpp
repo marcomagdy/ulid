@@ -36,7 +36,7 @@ using u8 = uint8_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-static u64 seed()
+static u64 rng_seed()
 {
     const auto now = std::chrono::steady_clock::now();
     const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
@@ -44,7 +44,7 @@ static u64 seed()
 }
 
 // xorshift64*
-static std::atomic<u64> state = seed();
+static std::atomic<u64> state{rng_seed()};
 static u64 rng()
 {
     u64 expected = state.load(std::memory_order_relaxed);
