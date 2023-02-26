@@ -34,7 +34,7 @@ jobs:
       run: sudo apt-get update && sudo apt install clang-tidy
 
     - name: Install Doctest
-      run: sudo apt install libdoctest-dev
+      run: sudo apt install doctest-dev
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
