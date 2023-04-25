@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 17)
 project(ulid VERSION 0.1.0 LANGUAGES CXX)
 
 option(ENABLE_SANITIZERS "Enables ASAN and UBSAN" ON)

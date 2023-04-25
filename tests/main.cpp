@@ -1,3 +1,6 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
+
 #include "ulid.h"
 
 #include <algorithm>
@@ -5,46 +8,44 @@
 #include <string>
 #include <thread>
 
-#include <catch2/catch_test_macros.hpp>
-
-TEST_CASE("ulid::generate() generates a valid ULID", "[ulid]")
+TEST_CASE("ulid::generate() generates a valid ULID")
 {
     const auto ulid = ulid::generate();
     REQUIRE(ulid.str().size() == 26);
 }
 
-TEST_CASE("Invalid ULID does not parse", "[ulid]")
+TEST_CASE("Invalid ULID does not parse")
 {
     std::string invalid_ulid = "01B3EAF48P97LF8X1ANX1BMA6X"; // contains invalid character 'L'
     REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
 }
 
-TEST_CASE("ULID with lowercase characters parses successfully", "[ulid]")
+TEST_CASE("ULID with lowercase characters parses successfully")
 {
     std::string lowercase_ulid = "01b3eaf48p97mf8x1anx1bma6x";
     REQUIRE(ulid::from_str(lowercase_ulid) != std::nullopt);
 }
 
-TEST_CASE("ULID with mixed-case characters parses successfully", "[ulid]")
+TEST_CASE("ULID with mixed-case characters parses successfully")
 {
     std::string lowercase_ulid = "01b3eaF48P97MF8X1anx1bma6x";
     REQUIRE(ulid::from_str(lowercase_ulid) != std::nullopt);
 }
 
-TEST_CASE("ULID with invalid length does not parse", "[ulid]")
+TEST_CASE("ULID with invalid length does not parse")
 {
     std::string invalid_ulid = "01b3eaf48p97mf";
     REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
 }
 
-TEST_CASE("ULID with extra characters does not parse", "[ulid]")
+TEST_CASE("ULID with extra characters does not parse")
 {
     std::string invalid_ulid = "01B3EAF48P97KF8X1ANX1BMA6XN0PE";
     REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
 }
 
 // ULID round-trip test (encode -> decode -> encode)
-TEST_CASE("ULID round-trip", "[ulid]")
+TEST_CASE("ULID round-trip")
 {
     const std::string ulid_str = ulid::generate().str();
     const auto ulid = ulid::from_str(ulid_str);
@@ -52,7 +53,7 @@ TEST_CASE("ULID round-trip", "[ulid]")
     REQUIRE(ulid->str() == ulid_str);
 }
 
-TEST_CASE("ULID generate into a pre-allocated buffer is null-terminated", "[ulid]")
+TEST_CASE("ULID generate into a pre-allocated buffer is null-terminated")
 {
     char output[27];
     ulid::generate(output);
@@ -60,7 +61,7 @@ TEST_CASE("ULID generate into a pre-allocated buffer is null-terminated", "[ulid
     REQUIRE(ulid::from_str(output) != std::nullopt);
 }
 
-TEST_CASE("ULID decodes to correct byte values", "[ulid]")
+TEST_CASE("ULID decodes to correct byte values")
 {
     std::string ulid_str = "01GFBZE3YBBJX1DVTM13EXZ2X6";
     const auto ulid = ulid::from_str(ulid_str).value();
@@ -84,7 +85,7 @@ TEST_CASE("ULID decodes to correct byte values", "[ulid]")
     REQUIRE(ulid.bits[15] == 0xA6);
 }
 
-TEST_CASE("ULID generate using entropy from another source", "[ulid]")
+TEST_CASE("ULID generate using entropy from another source")
 {
     // Generate 10 random bytes from std::random_device
     std::random_device random_device;
@@ -101,7 +102,7 @@ TEST_CASE("ULID generate using entropy from another source", "[ulid]")
     REQUIRE(std::equal(bits, bits + 10, entropy));
 }
 
-TEST_CASE("ULID random number generation is thread-safe", "[ulid]")
+TEST_CASE("ULID random number generation is thread-safe")
 {
     std::vector<std::string> thread_one_ulids;
     std::thread thread_one([&]() {
