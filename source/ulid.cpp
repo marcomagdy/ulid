@@ -112,7 +112,7 @@ static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
     ulid_buffer[15] = entropy[9];
 }
 
-static void ulid_encode(const u8* ulid_data, u8* output)
+static void ulid_encode(const u8* __restrict ulid_data, u8* output)
 {
     constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -158,7 +158,7 @@ static constexpr u8 decode_char(char character)
     return lookup[character - '0'];
 }
 
-static void ulid_decode(const char* ulid_data, u8* output)
+static void ulid_decode(const char* __restrict ulid_data, u8* output)
 {
     output[0] = decode_char(ulid_data[0]) << 5 | decode_char(ulid_data[1]);
     ulid_data += 2;
