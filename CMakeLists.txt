@@ -2,10 +2,11 @@ cmake_minimum_required(VERSION 3.10)
 project(ulid VERSION 0.1.0 LANGUAGES CXX)
 
 option(ENABLE_SANITIZERS "Enables ASAN and UBSAN" ON)
-
-add_subdirectory(source)
+option(ENABLE_COVERAGE "Enables test coverage report generation" OFF)
 
 include(CTest)
+add_subdirectory(source)
+
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()

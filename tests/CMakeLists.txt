@@ -12,3 +12,13 @@ endif()
 
 include(Catch)
 catch_discover_tests(${PROJECT_NAME}-test)
+
+if (ENABLE_COVERAGE)
+    include(${PROJECT_SOURCE_DIR}/cmake/CodeCoverage.cmake)
+    append_coverage_compiler_flags_to_target(${PROJECT_NAME})
+    append_coverage_compiler_flags()
+    setup_target_for_coverage_lcov(
+        NAME coverage
+        EXECUTABLE ctest
+        EXCLUDE "/opt/homebrew/include/*" "${CMAKE_OSX_SYSROOT}/*" "tests/*")
+endif()
