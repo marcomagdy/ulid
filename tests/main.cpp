@@ -4,9 +4,12 @@
 #include "ulid.h"
 
 #include <algorithm>
+#include <chrono>
 #include <random>
 #include <string>
 #include <thread>
+
+#include <uuid/uuid.h>
 
 TEST_CASE("ulid::generate() generates a valid ULID")
 {
@@ -127,4 +130,39 @@ TEST_CASE("ULID random number generation is thread-safe")
 
     std::sort(all_ulids.begin(), all_ulids.end());
     REQUIRE(std::adjacent_find(all_ulids.begin(), all_ulids.end()) == all_ulids.end());
+}
+
+static std::string generate_uuid()
+{
+    uuid_t uuid;
+    uuid_generate_random(uuid);
+    char uuid_str[37];
+    uuid_unparse(uuid, uuid_str);
+    return uuid_str;
+}
+TEST_CASE("ULID generation is 40% faster than UUID generation")
+{
+    // Generate 100,000 ULIDs and 100,000 UUIDs and compare the time taken
+    constexpr int num_iterations = 100000;
+    std::vector<std::string> store;
+    store.reserve(num_iterations);
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < num_iterations; i++) {
+        store.push_back(ulid::generate().str());
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    const auto ulid_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    // UUIDs
+    store.clear();
+    start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < num_iterations; i++) {
+        store.push_back(generate_uuid());
+    }
+    end = std::chrono::high_resolution_clock::now();
+    const auto uuid_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    REQUIRE(ulid_time.count() < uuid_time.count());
+    const auto diff = static_cast<double>(uuid_time.count() - ulid_time.count());
+    const auto percentage = (diff / static_cast<double>(uuid_time.count())) * 100;
+    REQUIRE(percentage >= 40);
 }
