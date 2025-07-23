@@ -5,69 +5,85 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <random>
 #include <string>
 #include <thread>
 
 #include <uuid/uuid.h>
 
-TEST_CASE("ulid::generate() generates a valid ULID")
+TEST_CASE("ulid_generate() generates a valid ULID")
 {
-    const auto ulid = ulid::generate();
-    REQUIRE(ulid.str().size() == 26);
+    char ulid_str[27];
+    ulid_generate_string(ulid_str);
+    REQUIRE(strlen(ulid_str) == 26);
 }
 
 TEST_CASE("Invalid ULID does not parse")
 {
     std::string invalid_ulid = "01B3EAF48P97LF8X1ANX1BMA6X"; // contains invalid character 'L'
-    REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(invalid_ulid.c_str(), &ulid) == 0);
 }
 
 TEST_CASE("ULID with lowercase characters parses successfully")
 {
     std::string lowercase_ulid = "01b3eaf48p97mf8x1anx1bma6x";
-    REQUIRE(ulid::from_str(lowercase_ulid) != std::nullopt);
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(lowercase_ulid.c_str(), &ulid) == 1);
 }
 
 TEST_CASE("ULID with mixed-case characters parses successfully")
 {
     std::string lowercase_ulid = "01b3eaF48P97MF8X1anx1bma6x";
-    REQUIRE(ulid::from_str(lowercase_ulid) != std::nullopt);
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(lowercase_ulid.c_str(), &ulid) == 1);
 }
 
 TEST_CASE("ULID with invalid length does not parse")
 {
     std::string invalid_ulid = "01b3eaf48p97mf";
-    REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(invalid_ulid.c_str(), &ulid) == 0);
 }
 
 TEST_CASE("ULID with extra characters does not parse")
 {
     std::string invalid_ulid = "01B3EAF48P97KF8X1ANX1BMA6XN0PE";
-    REQUIRE(ulid::from_str(invalid_ulid) == std::nullopt);
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(invalid_ulid.c_str(), &ulid) == 0);
 }
 
 // ULID round-trip test (encode -> decode -> encode)
 TEST_CASE("ULID round-trip")
 {
-    const std::string ulid_str = ulid::generate().str();
-    const auto ulid = ulid::from_str(ulid_str);
-    REQUIRE(ulid != std::nullopt);
-    REQUIRE(ulid->str() == ulid_str);
+    char ulid_str[27];
+    ulid_generate_string(ulid_str);
+
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(ulid_str, &ulid) == 1);
+
+    char recovered_str[27];
+    ulid_to_string(&ulid, recovered_str);
+    REQUIRE(strcmp(ulid_str, recovered_str) == 0);
 }
 
 TEST_CASE("ULID generate into a pre-allocated buffer is null-terminated")
 {
     char output[27];
-    ulid::generate(output);
+    ulid_generate_string(output);
     REQUIRE(output[26] == '\0');
-    REQUIRE(ulid::from_str(output) != std::nullopt);
+
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(output, &ulid) == 1);
 }
 
 TEST_CASE("ULID decodes to correct byte values")
 {
     std::string ulid_str = "01GFBZE3YBBJX1DVTM13EXZ2X6";
-    const auto ulid = ulid::from_str(ulid_str).value();
+    ulid_t ulid;
+    REQUIRE(ulid_from_string(ulid_str.c_str(), &ulid) == 1);
+
     // Equivalent UUID of this ULID is 0183D7F7-0FCB-5CBA-16EF-5408DDDF8BA6
     // check each byte individually
     REQUIRE(ulid.bits[0] == 0x01);
@@ -92,14 +108,19 @@ TEST_CASE("ULID generate using entropy from another source")
 {
     // Generate 10 random bytes from std::random_device
     std::random_device random_device;
-    ulid::u8 entropy[10];
+    unsigned char entropy[10];
     std::generate_n(entropy, 10, std::ref(random_device));
 
-    const auto ulid_string = ulid::generate(entropy).str();
-    // parse the generated ULID back into a ulid::ulid_t
-    std::optional<ulid::ulid_t> ulid = ulid::from_str(ulid_string);
-    REQUIRE(ulid != std::nullopt);
-    auto* bits = ulid->bits + 6; // skip the first 6 bytes (timestamp)
+    ulid_t ulid = ulid_generate_with_entropy(entropy);
+
+    char ulid_string[27];
+    ulid_to_string(&ulid, ulid_string);
+
+    // parse the generated ULID back into a ulid_t
+    ulid_t parsed_ulid;
+    REQUIRE(ulid_from_string(ulid_string, &parsed_ulid) == 1);
+
+    auto* bits = parsed_ulid.bits + 6; // skip the first 6 bytes (timestamp)
 
     // check that the last 10 bytes of the ULID match the entropy we provided
     REQUIRE(std::equal(bits, bits + 10, entropy));
@@ -110,14 +131,18 @@ TEST_CASE("ULID random number generation is thread-safe")
     std::vector<std::string> thread_one_ulids;
     std::thread thread_one([&]() {
         for (int i = 0; i < 1000; i++) {
-            thread_one_ulids.emplace_back(ulid::generate().str());
+            char ulid_str[27];
+            ulid_generate_string(ulid_str);
+            thread_one_ulids.emplace_back(ulid_str);
         }
     });
 
     std::vector<std::string> thread_two_ulids;
     std::thread thread_two([&]() {
         for (int i = 0; i < 1000; i++) {
-            thread_two_ulids.emplace_back(ulid::generate().str());
+            char ulid_str[27];
+            ulid_generate_string(ulid_str);
+            thread_two_ulids.emplace_back(ulid_str);
         }
     });
 
@@ -132,7 +157,8 @@ TEST_CASE("ULID random number generation is thread-safe")
     REQUIRE(std::adjacent_find(all_ulids.begin(), all_ulids.end()) == all_ulids.end());
 }
 
-static std::string generate_uuid()
+namespace {
+std::string generate_uuid()
 {
     uuid_t uuid;
     uuid_generate_random(uuid);
@@ -140,6 +166,7 @@ static std::string generate_uuid()
     uuid_unparse(uuid, uuid_str);
     return uuid_str;
 }
+} // namespace
 TEST_CASE("ULID generation is 40% faster than UUID generation")
 {
     // Generate 100,000 ULIDs and 100,000 UUIDs and compare the time taken
@@ -148,7 +175,9 @@ TEST_CASE("ULID generation is 40% faster than UUID generation")
     store.reserve(num_iterations);
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < num_iterations; i++) {
-        store.push_back(ulid::generate().str());
+        char ulid_str[27];
+        ulid_generate_string(ulid_str);
+        store.push_back(ulid_str);
     }
     auto end = std::chrono::high_resolution_clock::now();
     const auto ulid_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

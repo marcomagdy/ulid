@@ -27,17 +27,16 @@
 
 #include "ulid.h"
 
-#include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <string>
-#include <string_view>
 
 using u8 = uint8_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-static u64 rng_seed()
+namespace {
+
+u64 rng_seed()
 {
     const auto now = std::chrono::steady_clock::now();
     const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
@@ -45,8 +44,8 @@ static u64 rng_seed()
 }
 
 // xorshift64*
-static std::atomic<u64> state{rng_seed()};
-static u64 rng()
+std::atomic<u64> state{rng_seed()};
+u64 rng()
 {
     u64 expected = state.load(std::memory_order_relaxed);
     u64 number;
@@ -60,7 +59,7 @@ static u64 rng()
     return number * 0x2545F4914F6CDD1DULL;
 }
 
-static void ulid_create(u8* ulid_buffer)
+void ulid_create(u8* ulid_buffer)
 {
     using namespace std::chrono;
     const auto time_epoc = system_clock::now().time_since_epoch();
@@ -88,7 +87,7 @@ static void ulid_create(u8* ulid_buffer)
     ulid_buffer[15] = num;
 }
 
-static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
+void ulid_create(u8* ulid_buffer, const u8* entropy)
 {
     using namespace std::chrono;
     const auto time_epoc = system_clock::now().time_since_epoch();
@@ -101,19 +100,12 @@ static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
     ulid_buffer[4] = timestamp >> 8;
     ulid_buffer[5] = timestamp >> 0;
 
-    ulid_buffer[6] = entropy[0];
-    ulid_buffer[7] = entropy[1];
-    ulid_buffer[8] = entropy[2];
-    ulid_buffer[9] = entropy[3];
-    ulid_buffer[10] = entropy[4];
-    ulid_buffer[11] = entropy[5];
-    ulid_buffer[12] = entropy[6];
-    ulid_buffer[13] = entropy[7];
-    ulid_buffer[14] = entropy[8];
-    ulid_buffer[15] = entropy[9];
+    for (int i = 0; i < 10; ++i) {
+        ulid_buffer[6 + i] = entropy[i];
+    }
 }
 
-static void ulid_encode(const u8* __restrict ulid_data, u8* output)
+void ulid_encode(const u8* __restrict ulid_data, u8* output)
 {
     constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -137,7 +129,7 @@ static void ulid_encode(const u8* __restrict ulid_data, u8* output)
     }
 }
 
-static constexpr u8 decode_char(char character)
+constexpr u8 decode_char(char character)
 {
     // Table for decoding uppercase and lowercase base32 characters excluding I, L, O, U (i.e. Crockford's base32).
     // Other characters will decode to 0xff.
@@ -159,7 +151,7 @@ static constexpr u8 decode_char(char character)
     return lookup[character - '0'];
 }
 
-static void ulid_decode(const char* __restrict ulid_data, u8* output)
+void ulid_decode(const char* __restrict ulid_data, u8* output)
 {
     output[0] = decode_char(ulid_data[0]) << 5 | decode_char(ulid_data[1]);
     ulid_data += 2;
@@ -180,41 +172,40 @@ static void ulid_decode(const char* __restrict ulid_data, u8* output)
     }
 }
 
-static bool validate(std::string_view data)
+bool validate(const char* data, size_t length)
 {
-    if (data.size() != 26) {
+    if (length != 26) {
         return false;
     }
 
-    auto is_decodable = [](char letter) { return decode_char(letter) != 0xff; };
-
-    return std::all_of(data.begin(), data.end(), is_decodable);
+    for (size_t i = 0; i < length; ++i) {
+        if (decode_char(data[i]) == 0xff) {
+            return false;
+        }
+    }
+    return true;
 }
 
-namespace ulid {
+} // anonymous namespace
 
-std::string ulid_t::str() const
-{
-    u8 output[26];
-    ulid_encode(bits, output);
-    return {reinterpret_cast<const char*>(output), 26};
-}
+// C API implementation
+extern "C" {
 
-ulid_t generate()
+ulid_t ulid_generate(void)
 {
     ulid_t out;
     ulid_create(out.bits);
     return out;
 }
 
-ulid_t generate(const u8 (&entropy)[10])
+ulid_t ulid_generate_with_entropy(const unsigned char entropy[10])
 {
     ulid_t out;
     ulid_create(out.bits, entropy);
     return out;
 }
 
-void generate(char (&output)[27])
+void ulid_generate_string(char output[27])
 {
     ulid_t out;
     ulid_create(out.bits);
@@ -222,16 +213,31 @@ void generate(char (&output)[27])
     output[26] = '\0';
 }
 
-std::optional<ulid_t> from_str(std::string_view ulid_string)
+void ulid_to_string(const ulid_t* ulid, char output[27])
 {
-    if (!validate(ulid_string)) {
-        return std::nullopt;
+    ulid_encode(ulid->bits, reinterpret_cast<u8*>(output));
+    output[26] = '\0';
+}
+
+int ulid_from_string(const char* ulid_str, ulid_t* ulid)
+{
+    if (!ulid_str || !ulid) {
+        return 0;
     }
 
-    ulid_t out;
-    u8* out_ptr = out.bits;
-    const auto* data = ulid_string.data();
-    ulid_decode(data, out_ptr);
-    return out;
+    size_t length = 0;
+    const char* ptr = ulid_str;
+    while (*ptr && length < 27) { // Count up to 27 to detect strings that are too long
+        length++;
+        ptr++;
+    }
+
+    if (!validate(ulid_str, length)) {
+        return 0;
+    }
+
+    ulid_decode(ulid_str, ulid->bits);
+    return 1;
 }
-} // namespace ulid
+
+} // extern "C"

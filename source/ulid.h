@@ -26,38 +26,47 @@
 */
 
 #pragma once
-#include <optional>
-#include <string_view>
 
-namespace ulid {
-using u8 = unsigned char;
-struct ulid_t {
-    u8 bits[16];
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    /**
-     * Serialize the ULID bits into a string.
-     */
-    std::string str() const;
-};
+typedef struct {
+    unsigned char bits[16];
+} ulid_t;
 
 /**
  * Generate a new ULID.
  */
-ulid_t generate();
+ulid_t ulid_generate(void);
 
 /**
  * Generate a new ULID using the given entropy source.
+ * @param entropy Array of 10 bytes to use as entropy
  */
-ulid_t generate(const u8 (&entropy)[10]);
+ulid_t ulid_generate_with_entropy(const unsigned char entropy[10]);
 
 /**
  * Generate a new ULID string (26 characters) in the provided buffer and null terminate it.
+ * @param output Buffer of at least 27 characters to store the ULID string
  */
-void generate(char (&output)[27]);
+void ulid_generate_string(char output[27]);
+
+/**
+ * Serialize the ULID bits into a string.
+ * @param ulid The ULID to serialize
+ * @param output Buffer of at least 27 characters to store the ULID string
+ */
+void ulid_to_string(const ulid_t* ulid, char output[27]);
 
 /**
  * Decode a ULID string into its binary format.
+ * @param ulid_str The ULID string to decode (must be exactly 26 characters)
+ * @param ulid Output parameter to store the decoded ULID
+ * @return 1 on success, 0 on failure (invalid string)
  */
-std::optional<ulid_t> from_str(std::string_view ulid_str);
+int ulid_from_string(const char* ulid_str, ulid_t* ulid);
 
-} // namespace ulid
+#ifdef __cplusplus
+}
+#endif
