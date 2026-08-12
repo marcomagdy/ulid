@@ -25,9 +25,26 @@
    For more information, please refer to <http://unlicense.org/>
 */
 
-#pragma once
-#include <optional>
-#include <string_view>
+#ifndef ULID_H
+#define ULID_H
+
+#ifdef __cplusplus
+#    include <cstddef>
+#    include <optional>
+#    include <string>
+#    include <string_view>
+#else
+#    include <stddef.h>
+#    include <stdint.h>
+#endif
+
+#define ULID_SIZE 16
+#define ULID_STRING_LENGTH 26
+#define ULID_STRING_SIZE (ULID_STRING_LENGTH + 1)
+
+enum { ULID_OK = 0, ULID_ERROR = -1 };
+
+#ifdef __cplusplus
 
 namespace ulid {
 using u8 = unsigned char;
@@ -61,3 +78,76 @@ void generate(char (&output)[27]);
 std::optional<ulid_t> from_str(std::string_view ulid_str);
 
 } // namespace ulid
+
+extern "C" {
+
+/**
+ * Generate a new ULID. Returns ULID_OK or ULID_ERROR.
+ */
+int ulid_generate(ulid::ulid_t* out);
+
+/**
+ * Generate a new ULID using the given 10-byte entropy source.
+ */
+int ulid_generate_with_entropy(ulid::ulid_t* out, const unsigned char entropy[10]);
+
+/**
+ * Generate a new ULID string into dest (26 characters + NUL). dest must have room for 27 bytes.
+ */
+int ulid_generate_str(char dest[ULID_STRING_SIZE]);
+
+/**
+ * Encode a ULID as a 26-character NUL-terminated string. dest must have room for 27 bytes.
+ */
+int ulid_to_str(const ulid::ulid_t* id, char dest[ULID_STRING_SIZE]);
+
+/**
+ * Decode a NUL-terminated ULID string into its binary format.
+ */
+int ulid_from_str(const char* str, ulid::ulid_t* out);
+
+/**
+ * Decode a ULID string of explicit length into its binary format.
+ */
+int ulid_from_str_n(const char* str, size_t len, ulid::ulid_t* out);
+}
+
+#else /* C */
+
+typedef struct ulid_t {
+    uint8_t bits[ULID_SIZE];
+} ulid_t;
+
+/**
+ * Generate a new ULID. Returns ULID_OK or ULID_ERROR.
+ */
+int ulid_generate(ulid_t* out);
+
+/**
+ * Generate a new ULID using the given 10-byte entropy source.
+ */
+int ulid_generate_with_entropy(ulid_t* out, const uint8_t entropy[10]);
+
+/**
+ * Generate a new ULID string into dest (26 characters + NUL). dest must have room for 27 bytes.
+ */
+int ulid_generate_str(char dest[ULID_STRING_SIZE]);
+
+/**
+ * Encode a ULID as a 26-character NUL-terminated string. dest must have room for 27 bytes.
+ */
+int ulid_to_str(const ulid_t* id, char dest[ULID_STRING_SIZE]);
+
+/**
+ * Decode a NUL-terminated ULID string into its binary format.
+ */
+int ulid_from_str(const char* str, ulid_t* out);
+
+/**
+ * Decode a ULID string of explicit length into its binary format.
+ */
+int ulid_from_str_n(const char* str, size_t len, ulid_t* out);
+
+#endif /* __cplusplus */
+
+#endif /* ULID_H */

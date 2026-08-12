@@ -3,7 +3,7 @@
 ![Linux build badge](https://github.com/marcomagdy/ulid/actions/workflows/cmake.yml/badge.svg)
 ![CodeQL badge](https://github.com/marcomagdy/ulid/actions/workflows/codeql.yml/badge.svg)
 
-Lightweight [`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments:
+Lightweight [`ulid`](https://github.com/ulid/spec) implementation in C++ suitable for embedded environments, with a C99 API:
 
 1. No dynamic allocations
 1. No C++ Exceptions
@@ -41,4 +41,15 @@ Decode a ULID string back to bytes:
 ```cpp
   const char some_ulid[] = "01GF428XRREWQWJHXRRGNN99NV";
   ulid::ulid_t bits = ulid::from_str(some_ulid);
+```
+
+C99 (compile `ulid.cpp` as C++ and link it with your C code):
+```c
+  char ulid_str[ULID_STRING_SIZE];
+  ulid_generate_str(ulid_str);
+
+  ulid_t id;
+  if (ulid_from_str("01GF428XRREWQWJHXRRGNN99NV", &id) != ULID_OK) {
+      /* invalid ULID */
+  }
 ```

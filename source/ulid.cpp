@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstring>
 #include <string>
 #include <string_view>
 
@@ -37,7 +38,9 @@ using u8 = uint8_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-static u64 rng_seed()
+namespace {
+
+u64 rng_seed()
 {
     const auto now = std::chrono::steady_clock::now();
     const auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
@@ -45,8 +48,8 @@ static u64 rng_seed()
 }
 
 // xorshift64*
-static std::atomic<u64> state{rng_seed()};
-static u64 rng()
+std::atomic<u64> state{rng_seed()};
+u64 rng()
 {
     u64 expected = state.load(std::memory_order_relaxed);
     u64 number;
@@ -60,7 +63,7 @@ static u64 rng()
     return number * 0x2545F4914F6CDD1DULL;
 }
 
-static void ulid_create(u8* ulid_buffer)
+void ulid_create(u8* ulid_buffer)
 {
     using namespace std::chrono;
     const auto time_epoc = system_clock::now().time_since_epoch();
@@ -88,7 +91,7 @@ static void ulid_create(u8* ulid_buffer)
     ulid_buffer[15] = num;
 }
 
-static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
+void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
 {
     using namespace std::chrono;
     const auto time_epoc = system_clock::now().time_since_epoch();
@@ -113,7 +116,7 @@ static void ulid_create(u8* ulid_buffer, const u8 (&entropy)[10])
     ulid_buffer[15] = entropy[9];
 }
 
-static void ulid_encode(const u8* __restrict ulid_data, u8* output)
+void ulid_encode(const u8* __restrict ulid_data, u8* output)
 {
     constexpr char lookup[] = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -137,7 +140,7 @@ static void ulid_encode(const u8* __restrict ulid_data, u8* output)
     }
 }
 
-static constexpr u8 decode_char(char character)
+constexpr u8 decode_char(char character)
 {
     // Table for decoding uppercase and lowercase base32 characters excluding I, L, O, U (i.e. Crockford's base32).
     // Other characters will decode to 0xff.
@@ -159,7 +162,7 @@ static constexpr u8 decode_char(char character)
     return lookup[character - '0'];
 }
 
-static void ulid_decode(const char* __restrict ulid_data, u8* output)
+void ulid_decode(const char* __restrict ulid_data, u8* output)
 {
     output[0] = decode_char(ulid_data[0]) << 5 | decode_char(ulid_data[1]);
     ulid_data += 2;
@@ -180,7 +183,7 @@ static void ulid_decode(const char* __restrict ulid_data, u8* output)
     }
 }
 
-static bool validate(std::string_view data)
+bool validate(std::string_view data)
 {
     if (data.size() != 26) {
         return false;
@@ -190,6 +193,7 @@ static bool validate(std::string_view data)
 
     return std::all_of(data.begin(), data.end(), is_decodable);
 }
+} // namespace
 
 namespace ulid {
 
@@ -235,3 +239,73 @@ std::optional<ulid_t> from_str(std::string_view ulid_string)
     return out;
 }
 } // namespace ulid
+
+extern "C" {
+
+int ulid_generate(ulid::ulid_t* out)
+{
+    if (out == nullptr) {
+        return ULID_ERROR;
+    }
+    ulid_create(out->bits);
+    return ULID_OK;
+}
+
+int ulid_generate_with_entropy(ulid::ulid_t* out, const unsigned char entropy[10])
+{
+    if (out == nullptr || entropy == nullptr) {
+        return ULID_ERROR;
+    }
+    unsigned char entropy_arr[10];
+    std::memcpy(entropy_arr, entropy, sizeof(entropy_arr));
+    ulid_create(out->bits, entropy_arr);
+    return ULID_OK;
+}
+
+int ulid_generate_str(char dest[ULID_STRING_SIZE])
+{
+    if (dest == nullptr) {
+        return ULID_ERROR;
+    }
+    ulid::ulid_t out;
+    ulid_create(out.bits);
+    ulid_encode(out.bits, reinterpret_cast<u8*>(dest));
+    dest[ULID_STRING_LENGTH] = '\0';
+    return ULID_OK;
+}
+
+int ulid_to_str(const ulid::ulid_t* id, char dest[ULID_STRING_SIZE])
+{
+    if (id == nullptr || dest == nullptr) {
+        return ULID_ERROR;
+    }
+    ulid_encode(id->bits, reinterpret_cast<u8*>(dest));
+    dest[ULID_STRING_LENGTH] = '\0';
+    return ULID_OK;
+}
+
+int ulid_from_str(const char* str, ulid::ulid_t* out)
+{
+    if (str == nullptr || out == nullptr) {
+        return ULID_ERROR;
+    }
+    if (!validate(str)) {
+        return ULID_ERROR;
+    }
+    ulid_decode(str, out->bits);
+    return ULID_OK;
+}
+
+int ulid_from_str_n(const char* str, size_t len, ulid::ulid_t* out)
+{
+    if (str == nullptr || out == nullptr) {
+        return ULID_ERROR;
+    }
+    if (!validate(std::string_view(str, len))) {
+        return ULID_ERROR;
+    }
+    ulid_decode(str, out->bits);
+    return ULID_OK;
+}
+
+} // extern "C"
